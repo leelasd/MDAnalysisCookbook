@@ -16,7 +16,7 @@ Requires MDAnalysis http://www.mdanalysis.org
 import numpy as np
 import MDAnalysis as mda
 from MDAnalysis.tests.datafiles import PSF, DCD, PDB_small
-import pyqcprot as qcp
+import MDAnalysis.lib.qcprot as qcp
 
 ref = mda.Universe(PSF, PDB_small)  # reference structure 1AKE
 traj = mda.Universe(PSF, DCD)  # trajectory of change 1AKE->4AKE
@@ -31,7 +31,7 @@ rmsd = np.zeros((nframes,))
 
 # Setup writer to write aligned dcd file
 writer = mda.coordinates.DCD.DCDWriter(
-    'rmsfit.dcd', frames.numatoms,
+    'rmsfit.dcd', frames.n_atoms,
     frames.start_timestep,
     frames.skip_timestep,
     frames.delta,
@@ -39,11 +39,11 @@ writer = mda.coordinates.DCD.DCDWriter(
 
 ref_atoms = ref.select_atoms(selections['reference'])
 traj_atoms = traj.select_atoms(selections['target'])
-natoms = traj_atoms.numberOfAtoms()
+natoms = traj_atoms.n_atoms
 
 # if performing a mass-weighted alignment/rmsd calculation
 # masses = ref_atoms.masses
-#weight = masses/np.mean(masses)
+# weight = masses/np.mean(masses)
 
 # reference centre of mass system
 ref_com = ref_atoms.center_of_mass()
@@ -69,7 +69,8 @@ for k, ts in enumerate(frames):
 
     R = np.matrix(R.reshape(3, 3))
 
-    # Transform each atom in the trajectory (use inplace ops to avoid copying arrays)
+    # Transform each atom in the trajectory (use inplace ops to avoid copying
+    # arrays)
     ts._pos -= x_com
     ts._pos[:] = ts._pos * R  # R acts to the left & is broadcasted N times.
     ts._pos += ref_com
